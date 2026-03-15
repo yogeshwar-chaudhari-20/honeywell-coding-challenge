@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using StadiumAnalytics.Core.Events;
 using StadiumAnalytics.Core.Services;
@@ -13,8 +14,18 @@ builder.Services.AddDbContext<StadiumDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("StadiumDb") ?? "Data Source=stadium.db"));
 
 // Event channel (singleton -- shared between producer and consumer)
+builder.Services.AddOptions<EventChannelOptions>()
+    .BindConfiguration(EventChannelOptions.SectionName)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 builder.Services.AddSingleton<GateEventChannel>();
 builder.Services.AddSingleton<IGateEventChannel>(sp => sp.GetRequiredService<GateEventChannel>());
+
+// Event consumer options
+builder.Services.AddOptions<EventConsumerOptions>()
+    .BindConfiguration(EventConsumerOptions.SectionName)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 
 // Background services
 builder.Services.AddHostedService<EventConsumerService>();
@@ -56,6 +67,11 @@ builder.Services.AddHealthChecks()
     .AddDbContextCheck<StadiumDbContext>("database", tags: new[] { "ready" });
 
 var app = builder.Build();
+
+// Optional base path (e.g. when hosted behind a reverse proxy at /stadium-analytics)
+var pathBase = app.Configuration["Application:PathBase"];
+if (!string.IsNullOrWhiteSpace(pathBase))
+    app.UsePathBase(new PathString(pathBase.Trim()));
 
 // Apply migrations and seed on startup
 using (var scope = app.Services.CreateScope())
