@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using StadiumAnalytics.Core.Dtos;
 using StadiumAnalytics.Core.Events;
-using StadiumAnalytics.Core.Models;
+using StadiumAnalytics.Core.Services;
 
 namespace StadiumAnalytics.Api.Controllers;
 
@@ -9,10 +9,12 @@ namespace StadiumAnalytics.Api.Controllers;
 [Route("api/v1/events")]
 public sealed class EventsController : ControllerBase
 {
+    private readonly IEventIngestionService _eventIngestionService;
     private readonly IGateEventChannel _channel;
 
-    public EventsController(IGateEventChannel channel)
+    public EventsController(IEventIngestionService eventIngestionService, IGateEventChannel channel)
     {
+        _eventIngestionService = eventIngestionService;
         _channel = channel;
     }
 
@@ -39,70 +41,16 @@ public sealed class EventsController : ControllerBase
         [FromBody] SensorEventIngressRequest? request,
         CancellationToken cancellationToken)
     {
-        if (request is null)
+        var result = _eventIngestionService.ValidateAndMap(request!);
+
+        if (!result.IsValid)
         {
-            ModelState.AddModelError(string.Empty, "Request body is required.");
+            foreach (var (key, message) in result.Errors)
+                ModelState.AddModelError(key, message);
             return ValidationProblem(ModelState);
         }
 
-        StadiumGate? parsedGate = null;
-        if (string.IsNullOrWhiteSpace(request.Gate))
-        {
-            ModelState.AddModelError(nameof(request.Gate), "Gate is required.");
-        }
-        else if (request.Gate.Length > 100)
-        {
-            ModelState.AddModelError(nameof(request.Gate), "Gate must not exceed 100 characters.");
-        }
-        else if (!StadiumGateExtensions.TryParseDisplayName(request.Gate, out var g))
-        {
-            var validGates = string.Join(", ", Enum.GetValues<StadiumGate>().Select(x => x.ToDisplayName()));
-            ModelState.AddModelError(nameof(request.Gate), $"Invalid gate. Valid values: {validGates}");
-        }
-        else
-        {
-            parsedGate = g;
-        }
-
-        if (request.Timestamp is null)
-        {
-            ModelState.AddModelError(nameof(request.Timestamp), "Timestamp is required.");
-        }
-
-        if (request.NumberOfPeople is null)
-        {
-            ModelState.AddModelError(nameof(request.NumberOfPeople), "NumberOfPeople is required.");
-        }
-        else if (request.NumberOfPeople <= 0)
-        {
-            ModelState.AddModelError(nameof(request.NumberOfPeople), "NumberOfPeople must be greater than zero.");
-        }
-
-        GateEventType? parsedType = null;
-        if (string.IsNullOrWhiteSpace(request.Type))
-        {
-            ModelState.AddModelError(nameof(request.Type), "Type is required.");
-        }
-        else if (!Enum.TryParse<GateEventType>(request.Type, ignoreCase: true, out var t))
-        {
-            ModelState.AddModelError(nameof(request.Type), "Invalid type. Valid values: enter, leave");
-        }
-        else
-        {
-            parsedType = t;
-        }
-
-        if (!ModelState.IsValid)
-            return ValidationProblem(ModelState);
-
-        var sensorEvent = new GateSensorEvent(
-            parsedGate!.Value,
-            request.Timestamp!.Value,
-            request.NumberOfPeople!.Value,
-            parsedType!.Value);
-
-        await _channel.PublishAsync(sensorEvent, cancellationToken);
-
+        await _channel.PublishAsync(result.Event!, cancellationToken);
         return Accepted();
     }
 }
