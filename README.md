@@ -2,6 +2,8 @@
 
 Event-driven .NET 8 Web API for stadium gate people-flow analytics. Simulated gate sensor events are consumed asynchronously via an in-process channel, persisted to SQLite, and queryable through a REST endpoint.
 
+**Both the Event API (ingestion) and the Summary API (analytics) run in the same application** — a single `StadiumAnalytics.Api` host serves all endpoints.
+
 ## Quick Start
 
 ```bash
@@ -11,7 +13,7 @@ dotnet build
 # Run (seeds DB with 5 minutes of data, starts simulator)
 dotnet run --project src/StadiumAnalytics.Api
 
-# Open Swagger UI (see launchSettings for port, e.g. http://localhost:5142/swagger)
+# Open Swagger UI: http://localhost:5142/swagger
 
 # Run tests (unit + integration)
 dotnet test
@@ -34,6 +36,18 @@ POST /api/v1/events ─┘         (bounded)                (dedup,     │
 **Read path** (decoupled): Controllers are thin HTTP adapters; business logic (query parsing, validation, aggregation) lives in `IAnalyticsQueryService` and `IEventIngestionService`, testable without the web host.
 
 ## API
+
+**Base URL** (default when running locally): `http://localhost:5142`
+
+| Endpoint | Full URL |
+| -------- | -------- |
+| Summary (analytics) | `GET http://localhost:5142/api/v1/analytics/summary` |
+| Event ingestion | `POST http://localhost:5142/api/v1/events` |
+| Liveness | `GET http://localhost:5142/health/live` |
+| Readiness | `GET http://localhost:5142/health/ready` |
+| Swagger UI | `http://localhost:5142/swagger` |
+
+---
 
 ### `GET /api/v1/analytics/summary`
 
