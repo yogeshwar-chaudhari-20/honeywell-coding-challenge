@@ -1,0 +1,50 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1CB71C69-15CF-4029-8311-7D41B0B98A2B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StadiumAnalytics.Api", "src\StadiumAnalytics.Api\StadiumAnalytics.Api.csproj", "{F53E1760-0B69-49CD-BC7F-291CE21FC77E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StadiumAnalytics.Core", "src\StadiumAnalytics.Core\StadiumAnalytics.Core.csproj", "{12AA0EA6-E894-47A5-9249-7A1D4DB7313E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StadiumAnalytics.Infrastructure", "src\StadiumAnalytics.Infrastructure\StadiumAnalytics.Infrastructure.csproj", "{70C86FEB-B4F1-45E0-8D8F-D8FF5E32E318}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{8F3EA75F-CEB3-412B-A35C-240FE24DBCE8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StadiumAnalytics.Tests", "tests\StadiumAnalytics.Tests\StadiumAnalytics.Tests.csproj", "{62A54363-754B-4C63-902A-1DD6F4BBDEA9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F53E1760-0B69-49CD-BC7F-291CE21FC77E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F53E1760-0B69-49CD-BC7F-291CE21FC77E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F53E1760-0B69-49CD-BC7F-291CE21FC77E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F53E1760-0B69-49CD-BC7F-291CE21FC77E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{12AA0EA6-E894-47A5-9249-7A1D4DB7313E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12AA0EA6-E894-47A5-9249-7A1D4DB7313E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12AA0EA6-E894-47A5-9249-7A1D4DB7313E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12AA0EA6-E894-47A5-9249-7A1D4DB7313E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{70C86FEB-B4F1-45E0-8D8F-D8FF5E32E318}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{70C86FEB-B4F1-45E0-8D8F-D8FF5E32E318}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{70C86FEB-B4F1-45E0-8D8F-D8FF5E32E318}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{70C86FEB-B4F1-45E0-8D8F-D8FF5E32E318}.Release|Any CPU.Build.0 = Release|Any CPU
+		{62A54363-754B-4C63-902A-1DD6F4BBDEA9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62A54363-754B-4C63-902A-1DD6F4BBDEA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62A54363-754B-4C63-902A-1DD6F4BBDEA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62A54363-754B-4C63-902A-1DD6F4BBDEA9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F53E1760-0B69-49CD-BC7F-291CE21FC77E} = {1CB71C69-15CF-4029-8311-7D41B0B98A2B}
+		{12AA0EA6-E894-47A5-9249-7A1D4DB7313E} = {1CB71C69-15CF-4029-8311-7D41B0B98A2B}
+		{70C86FEB-B4F1-45E0-8D8F-D8FF5E32E318} = {1CB71C69-15CF-4029-8311-7D41B0B98A2B}
+		{62A54363-754B-4C63-902A-1DD6F4BBDEA9} = {8F3EA75F-CEB3-412B-A35C-240FE24DBCE8}
+	EndGlobalSection
+EndGlobal
