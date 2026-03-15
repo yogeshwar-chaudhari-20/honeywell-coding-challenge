@@ -77,12 +77,14 @@ Ingest a single gate sensor event from an external source (e.g. real sensors). R
 }
 ```
 
-| Field           | Type     | Required | Description                    |
-| --------------- | -------- | -------- | ------------------------------ |
-| `gate`          | string   | Yes      | Gate name: Gate A … Gate E      |
-| `timestamp`     | ISO 8601 | Yes      | Event time                     |
-| `numberOfPeople`| integer  | Yes      | Must be &gt; 0                 |
-| `type`          | string   | Yes      | `enter` or `leave`             |
+
+| Field            | Type     | Required | Description                |
+| ---------------- | -------- | -------- | -------------------------- |
+| `gate`           | string   | Yes      | Gate name: Gate A … Gate E |
+| `timestamp`      | ISO 8601 | Yes      | Event time                 |
+| `numberOfPeople` | integer  | Yes      | Must be > 0                |
+| `type`           | string   | Yes      | `enter` or `leave`         |
+
 
 **Responses**: 202 Accepted (event queued), 400 Bad Request (validation errors, Problem Details).
 
