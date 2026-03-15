@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using StadiumAnalytics.Core.Events;
 using StadiumAnalytics.Core.Models;
 using StadiumAnalytics.Infrastructure.Data;
@@ -15,16 +16,17 @@ public sealed class EventConsumerService : BackgroundService
     private readonly IGateEventChannel _channel;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<EventConsumerService> _logger;
-
-    private static readonly TimeSpan ShutdownDrainTimeout = TimeSpan.FromSeconds(10);
+    private readonly EventConsumerOptions _options;
 
     public EventConsumerService(
         IGateEventChannel channel,
         IServiceScopeFactory scopeFactory,
+        IOptions<EventConsumerOptions> options,
         ILogger<EventConsumerService> logger)
     {
         _channel = channel;
         _scopeFactory = scopeFactory;
+        _options = options.Value;
         _logger = logger;
     }
 
@@ -50,7 +52,8 @@ public sealed class EventConsumerService : BackgroundService
 
     private async Task DrainRemainingEventsAsync()
     {
-        using var drainCts = new CancellationTokenSource(ShutdownDrainTimeout);
+        var timeoutSeconds = Math.Clamp(_options.ShutdownDrainTimeoutSeconds, 1, 300);
+        using var drainCts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
         var drained = 0;
 
         try
