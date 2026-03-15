@@ -11,27 +11,27 @@ dotnet build
 # Run (seeds DB with 5 minutes of data, starts simulator)
 dotnet run --project src/StadiumAnalytics.Api
 
-# Open Swagger UI
-# https://localhost:5001/swagger
+# Open Swagger UI (see launchSettings for port, e.g. http://localhost:5142/swagger)
 
-# Run tests (35 tests: unit + integration)
+# Run tests (unit + integration)
 dotnet test
 ```
 
 ## Architecture
 
 ```
-Sensor Simulation ──> Channel<GateSensorEvent> ──> Consumer ──> SQLite
-                        (bounded, backpressure)     (per-event     │
-                                                    error isolation) │
-                                                                     │
-                    Dashboard  <──  AnalyticsController  <───────────┘
-                                    GET /api/v1/analytics/summary
+Sensor Simulation ──┐
+                    ├──> Channel<GateSensorEvent> ──> Consumer ──> SQLite
+POST /api/v1/events ─┘         (bounded)                (dedup,     │
+                                                         FailedEvents) │
+                                                                        │
+                     Dashboard  <──  IAnalyticsQueryService  <──────────┘
+                                     GET /api/v1/analytics/summary
 ```
 
-**Write path** (decoupled): Simulator produces sensor events → bounded channel → background consumer persists to DB. Duplicates are caught by the composite unique key and logged to the `FailedEvents` table.
+**Write path** (decoupled): Simulator or external clients (POST `/api/v1/events`) produce sensor events → bounded channel → background consumer persists to DB. Duplicates are caught by the composite unique key and logged to the `FailedEvents` table.
 
-**Read path** (decoupled): REST endpoint queries the DB directly with GROUP BY + SUM. Never touches the channel or consumer.
+**Read path** (decoupled): Controllers are thin HTTP adapters; business logic (query parsing, validation, aggregation) lives in `IAnalyticsQueryService` and `IEventIngestionService`, testable without the web host.
 
 ## API
 
@@ -62,6 +62,30 @@ Returns sensor data aggregated by gate and type.
 
 **Error responses**: 400 Bad Request with RFC 7807 Problem Details for invalid filters.
 
+### `POST /api/v1/events`
+
+Ingest a single gate sensor event from an external source (e.g. real sensors). Request is validated, then accepted asynchronously (202). The same channel and consumer handle persistence and deduplication.
+
+**Request body**:
+
+```json
+{
+  "gate": "Gate A",
+  "timestamp": "2023-04-01T08:00:00Z",
+  "numberOfPeople": 10,
+  "type": "enter"
+}
+```
+
+| Field           | Type     | Required | Description                    |
+| --------------- | -------- | -------- | ------------------------------ |
+| `gate`          | string   | Yes      | Gate name: Gate A … Gate E      |
+| `timestamp`     | ISO 8601 | Yes      | Event time                     |
+| `numberOfPeople`| integer  | Yes      | Must be &gt; 0                 |
+| `type`          | string   | Yes      | `enter` or `leave`             |
+
+**Responses**: 202 Accepted (event queued), 400 Bad Request (validation errors, Problem Details).
+
 ### Health Checks
 
 - `GET /health/live` — process is alive (always 200)
@@ -72,11 +96,11 @@ Returns sensor data aggregated by gate and type.
 ```
 StadiumAnalytics.sln
 src/
-  StadiumAnalytics.Core/           Zero dependencies. Domain models, enums, DTOs, IGateEventChannel.
-  StadiumAnalytics.Infrastructure/ EF Core, channel impl, consumer, simulator, seeder.
-  StadiumAnalytics.Api/            Thin host: DI wiring, middleware, controller.
+  StadiumAnalytics.Core/           Domain models, enums, DTOs, IGateEventChannel, IAnalyticsQueryService, IEventIngestionService.
+  StadiumAnalytics.Infrastructure/ EF Core, channel impl, consumer, simulator, seeder, service implementations.
+  StadiumAnalytics.Api/            Thin controllers (HTTP only); DI, middleware, health, Swagger.
 tests/
-  StadiumAnalytics.Tests/          Unit tests + integration tests.
+  StadiumAnalytics.Tests/          Unit tests (domain, services) + integration tests (WebApplicationFactory).
 ```
 
 ## Design Decisions
@@ -98,6 +122,10 @@ Stores raw sensor data including invalid values — nullable columns, no CHECK c
 - Bounded (capacity 1000), `BoundedChannelFullMode.Wait` — correctness over throughput
 - High-water mark warning at 80% capacity
 - In production, swap to RabbitMQ/Azure Service Bus via `IGateEventChannel` abstraction
+
+### Service Layer
+
+Controllers only handle HTTP (binding, calling services, response). Parsing, validation, query building, and display-name mapping live in `AnalyticsQueryService` and `EventIngestionService`, so that logic is unit-testable without spinning up the web host.
 
 ### Graceful Shutdown
 
