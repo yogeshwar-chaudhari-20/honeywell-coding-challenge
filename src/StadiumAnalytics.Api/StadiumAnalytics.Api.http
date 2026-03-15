@@ -1,6 +1,17 @@
 @StadiumAnalytics.Api_HostAddress = http://localhost:5142
 
-GET {{StadiumAnalytics.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Ingest a gate sensor event (POST required)
+POST {{StadiumAnalytics.Api_HostAddress}}/api/v1/events
+Content-Type: application/json
+
+{
+  "gate": "Gate A",
+  "timestamp": "2023-04-01T08:00:00Z",
+  "numberOfPeople": 10,
+  "type": "enter"
+}
+
+### Analytics summary
+GET {{StadiumAnalytics.Api_HostAddress}}/api/v1/analytics/summary
 
 ###
