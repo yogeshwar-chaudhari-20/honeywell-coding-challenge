@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using StadiumAnalytics.Core.Events;
 using StadiumAnalytics.Core.Models;
 
@@ -8,16 +9,20 @@ namespace StadiumAnalytics.Infrastructure.Events;
 
 public sealed class GateEventChannel : IGateEventChannel
 {
-    private const int Capacity = 1000;
-    private const int HighWaterMark = 800;
-
     private readonly Channel<GateSensorEvent> _channel;
     private readonly ILogger<GateEventChannel> _logger;
+    private readonly int _capacity;
+    private readonly int _highWaterMark;
 
-    public GateEventChannel(ILogger<GateEventChannel> logger)
+    public GateEventChannel(
+        IOptions<EventChannelOptions> options,
+        ILogger<GateEventChannel> logger)
     {
         _logger = logger;
-        _channel = Channel.CreateBounded<GateSensorEvent>(new BoundedChannelOptions(Capacity)
+        var opts = options.Value;
+        _capacity = Math.Clamp(opts.Capacity, 1, 100_000);
+        _highWaterMark = Math.Min(Math.Clamp(opts.HighWaterMark, 1, 100_000), _capacity);
+        _channel = Channel.CreateBounded<GateSensorEvent>(new BoundedChannelOptions(_capacity)
         {
             FullMode = BoundedChannelFullMode.Wait,
             SingleReader = true,
@@ -30,9 +35,9 @@ public sealed class GateEventChannel : IGateEventChannel
         await _channel.Writer.WriteAsync(sensorEvent, cancellationToken);
 
         var currentCount = _channel.Reader.Count;
-        if (currentCount >= HighWaterMark)
+        if (currentCount >= _highWaterMark)
         {
-            _logger.LogWarning("Channel high-water mark reached: {Count}/{Capacity}", currentCount, Capacity);
+            _logger.LogWarning("Channel high-water mark reached: {Count}/{Capacity}", currentCount, _capacity);
         }
     }
 
