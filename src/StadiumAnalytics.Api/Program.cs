@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using StadiumAnalytics.Core.Events;
+using StadiumAnalytics.Core.Services;
 using StadiumAnalytics.Infrastructure.Data;
 using StadiumAnalytics.Infrastructure.Events;
+using StadiumAnalytics.Infrastructure.Services;
 using StadiumAnalytics.Infrastructure.Simulation;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,6 +28,10 @@ builder.Services.AddOptions<EventSimulationOptions>()
 
 // Seeder
 builder.Services.AddTransient<DatabaseSeeder>();
+
+// Application services
+builder.Services.AddScoped<IAnalyticsQueryService, AnalyticsQueryService>();
+builder.Services.AddScoped<IEventIngestionService, EventIngestionService>();
 
 // Controllers
 builder.Services.AddControllers();
